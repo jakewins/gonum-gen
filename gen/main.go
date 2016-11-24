@@ -17,12 +17,14 @@ var (
 	sourceDir string
 	targetDir string
 	pkgSuffix string
+	targetType string
 	sep = string(filepath.Separator)
 )
 
 func init() {
 	flag.StringVar(&targetDir, "o", "", "Output dir")
 	flag.StringVar(&pkgSuffix, "s", "", "Generated package suffix")
+	flag.StringVar(&targetType, "t", "", "Type to generate for")
 }
 
 func main() {
@@ -65,7 +67,7 @@ func generate(sourcePath, sourceFile string) {
 
 func rewrite(src, dst string) {
 	find := "TYPE"
-	replace := "int32"
+	replace := targetType
 
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, src, nil, 0)
@@ -73,7 +75,8 @@ func rewrite(src, dst string) {
 		panic(err)
 	}
 
-	ast.Print(fset, f)
+	// Useful to see what the AST looks like
+	//ast.Print(fset, f)
 
 	// Change package name
 	f.Name.Name = f.Name.Name + pkgSuffix
