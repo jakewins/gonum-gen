@@ -1,11 +1,11 @@
-package mat
+package mat32
 
-type TYPE float64
+type TYPE int32
 
 type Matrix interface {
 	Dims() (r, c int)
 
-	At(i, j int) TYPE
+	At(i, j int) int32
 
 	T() Matrix
 }
@@ -19,7 +19,7 @@ type Transpose struct {
 	Matrix Matrix
 }
 
-func (t Transpose) At(i, j int) TYPE {
+func (t Transpose) At(i, j int) int32 {
 	return t.Matrix.At(j, i)
 }
 
@@ -41,7 +41,7 @@ type Untransposer interface {
 }
 
 type Mutable interface {
-	Set(i, j int, v TYPE)
+	Set(i, j int, v int32)
 
 	Matrix
 }

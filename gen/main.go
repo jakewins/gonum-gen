@@ -10,6 +10,7 @@ import (
 	"go/printer"
 	"go/token"
 	"bufio"
+	"go/ast"
 )
 
 var (
@@ -49,6 +50,7 @@ func generateAll(path string) {
 
 func generate(sourcePath, sourceFile string) {
 	targetPath := strings.Replace(sourcePath, sourceDir, targetDir, 1) + pkgSuffix
+	src := sourcePath + sep + sourceFile
 	dst := targetPath + sep + "gen_" + sourceFile
 
 	_, err := os.Stat(dst)
@@ -57,23 +59,41 @@ func generate(sourcePath, sourceFile string) {
 	}
 
 	os.MkdirAll(targetPath, 0777)
-	os.Link(sourcePath + sep + sourceFile, dst)
 
-	rewrite(dst)
+	rewrite(src, dst)
 }
 
-func rewrite(path string) {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, path, nil, 0)
+func rewrite(src, dst string) {
+	find := "TYPE"
+	replace := "int32"
 
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, src, nil, 0)
 	if err != nil {
 		panic(err)
 	}
 
+	ast.Print(fset, f)
+
 	// Change package name
 	f.Name.Name = f.Name.Name + pkgSuffix
 
-	writeAst(f, fset, path)
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.TypeSpec:
+			if x.Name.Name == find {
+				x.Type.(*ast.Ident).Name = replace
+				return false
+			}
+		case *ast.Ident:
+			if x.Name == find {
+				x.Name = replace
+			}
+		}
+		return true
+	})
+
+	writeAst(f, fset, dst)
 }
 
 func writeAst(f interface{}, fset *token.FileSet, dst string) {
